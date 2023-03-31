@@ -1,9 +1,12 @@
+'''Python CLI for racaty downloader'''
+
 import os
 import sys
 import argparse
 import traceback
 import requests
 import re
+import cfscrape
 from tqdm import tqdm
 from random import choice
 
@@ -56,18 +59,20 @@ def err(txt):
 	traceback.print_exc()
 
 def extract(url):
+    ses = requests.Session()
+    ses.headers = {
+		'referer': 'https://racaty.io',
+		'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36',
+		'accept': 'application/json'
+	}
     regex = r'https://racaty.io/([a-zA-Z\d]{12})'
     match = re.match(regex, url)
     _id = match.group(1)
     
     payload='op=download2&id='+ str(_id) +'&rand=&referer=&method_free=&method_premium='
-    headers = {
-        'origin': 'https://racaty.io',
-        'referer': url,
-        'user-agent': RAND_UA
-    }
 
-    response = requests.request("POST", url, headers=headers, data=payload).text
+    scraper = cfscrape.create_scraper()
+    response = scraper.post(url, data=payload).text
 
     content = re.search(r'id="uniqueExpirylink"\s*href="([^"]+)', response, re.DOTALL)
     file_url = content.group(1).replace(' ', '%20')
